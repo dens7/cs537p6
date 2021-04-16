@@ -1,3 +1,10 @@
+// Linked List 
+typedef struct node {
+  struct node *next;
+  struct node *prev;
+  pde_t *v; // Maybe vaddr here
+} node_t;
+
 // Per-CPU state
 struct cpu {
   uchar apicid;                // Local APIC ID
@@ -49,6 +56,8 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
+  node_t clockQ[CLOCKSIZE];       // Locally allocated Clock Queue 
+  node_t *head;                  // Double-linked List Queue
 };
 
 // Process memory is laid out contiguously, low addresses first:

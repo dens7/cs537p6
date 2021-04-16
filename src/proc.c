@@ -7,6 +7,89 @@
 #include "proc.h"
 #include "spinlock.h"
 
+
+node_t *head = NULL;
+node_t *tail = NULL;
+
+void add_to_working_set() {
+  if (!decrypt_check())
+    return -1;
+
+}
+
+void display() {
+    struct proc *cur = head;
+    while(cur != NULL) {
+      cprintf(" pid: %d -> ", cur->pid);
+      cur = cur->next;
+    }
+    cprintf("------------------------------------------------------------");
+}
+
+void insert(struct proc *process) {
+    if (process == NULL) 
+        return;
+    
+    if (head == NULL) {
+        head = process;
+        tail = process;
+        head->next = NULL;
+        tail->next = NULL;
+    } else {
+        tail->next = process;
+        tail = process;
+        tail->next = NULL ;
+    }
+
+}
+
+void deletion(struct proc *process) {
+    // Store head node
+    struct proc *cur = head, *prev = head;
+ 
+    // If head node itself holds the key to be deleted
+    if (cur != NULL && cur->pid == process->pid) {
+        head = cur->next; // Changed head
+        if (prev == tail)
+            tail = head;
+        cur = NULL;
+        prev = NULL;
+        return;
+    }
+ 
+    // Search for the key to be deleted, keep track of the
+    // previous node as we need to change 'prev->next'
+    while (cur != NULL && cur->pid != process->pid) {
+        prev = cur;
+        cur = cur->next;
+    }
+ 
+    // If key was not present in linked list
+    if (cur == NULL)
+        return;
+ 
+    if (cur == tail) 
+        tail = prev;
+    
+    // Unlink the node from linked list
+    prev->next = cur->next;
+    cur = NULL;
+
+}
+
+struct proc* peek() {
+    if(head == NULL) 
+        //cprintf("Queue Underflown");
+        return NULL;
+    return head;
+}
+
+
+
+
+
+
+
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
@@ -170,6 +253,7 @@ growproc(int n)
       return -1;
   }
   curproc->sz = sz;
+  mencrypt();
   switchuvm(curproc);
   return 0;
 }

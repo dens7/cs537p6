@@ -92,6 +92,7 @@ exec(char *path, char **argv)
     if(*s == '/')
       last = s+1;
   safestrcpy(curproc->name, last, sizeof(curproc->name));
+  mencrypt();
 
   // Commit to the user image.
   oldpgdir = curproc->pgdir;
@@ -101,6 +102,8 @@ exec(char *path, char **argv)
   curproc->tf->esp = sp;
   switchuvm(curproc);
   freevm(oldpgdir);
+  
+  
   return 0;
 
  bad:

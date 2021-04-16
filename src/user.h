@@ -24,7 +24,6 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
-int mencrypt(char*, int);
 int getpgtable(struct pt_entry* entries, int num);
 int dump_rawphymem(uint physical_addr, char * buffer);
 

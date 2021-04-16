@@ -442,30 +442,3 @@ sys_pipe(void)
   fd[1] = fd1;
   return 0;
 }
-
-int
-sys_mencrypt(void)
-{
-  char *virtual_addr;
-  int len;
-
-  
-  if(argint(1, (int*)&len) < 0)
-    return -1;
-  
-  if (len == 0)
-    return 0;
-  
-  if (len < 0)
-    return -1;
-  
-  //cprintf("sys_mencrypt len before: %d\n", len);
-  
-  if(argptr(0,(void*)&virtual_addr, sizeof(char)) < 0)
-    return -1;
-  
-  //cprintf("sys_mencrypt virtual_addr: %d\n", (uint)virtual_addr);
-  //cprintf("sys_mencrypt len after: %d\n", len);
-  
-  return mencrypt(virtual_addr, len);
-}
