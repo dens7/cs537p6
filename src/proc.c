@@ -11,13 +11,6 @@
 node_t *head = NULL;
 node_t *tail = NULL;
 
-void add_to_working_set() {
-  if (!decrypt_check())
-    return -1;
-  
-
-}
-
 // Insert a page (should be guaranteed not already in queue)
 // into the clock queue.
 static void

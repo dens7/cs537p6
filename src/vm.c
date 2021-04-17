@@ -444,42 +444,34 @@ copyout(pde_t *pgdir, uint va, void *p, uint len)
 }
 
 int 
-mencrypt(char *virtual_addr, int len) {
-  if (len == 0)
-    return 0;
-  
-  if (len < 0)
-    return -1;
+mencrypt(char *virtual_addr, pte_t *pte) {
   
   char * va;
   char * va_base;
-  int i = 0;
-  for(;i < len; i++) {
-    va = (char *)(PGROUNDDOWN((uint)virtual_addr)+ i * PGSIZE);
-    if(uva2ka(myproc()->pgdir, (char*)va) == 0)
+  if(uva2ka(myproc()->pgdir, (char*)virtual_addr) == 0) {
       return -1;
   }
   
+  if(pte == 0)
+    panic("setptee/clearptep");
   
-  for(i = 0; i < len; i++) { 
-    
-    va_base = (char *)(PGROUNDDOWN((uint)virtual_addr) + i * PGSIZE);
-    pte_t *pte;
-    pte = walkpgdir(myproc()->pgdir, va_base, 0);
-    if ((*pte & PTE_E) != 0) {
-      continue;
-    }
+  //va_base = (char *)(PGROUNDDOWN((uint)virtual_addr) + i * PGSIZE);
+  //pte_t *pte;
+  //pte = walkpgdir(myproc()->pgdir, va_base, 0);
+  //setptee(myproc()->pgdir, va_base);
+  //clearptep(myproc()->pgdir, va_base);
 
-
-    setptee(myproc()->pgdir, va_base);
-    clearptep(myproc()->pgdir, va_base);
-      
-    va_base  = (char*)P2V(PTE_ADDR(*pte));
-    for (int j = 0; j < PGSIZE; j++) {
-      
-      va = (char *)((uint)va_base + j);
-      *va ^= 0xFFFF;
-    }
+  if ((*pte & PTE_E) != 0) {
+    return 0;
+  }
+  
+  *pte |= PTE_E;
+  *pte &= ~PTE_P;
+  
+  va_base  = (char*)P2V(PTE_ADDR(*pte));
+  for (int j = 0; j < PGSIZE; j++) {  
+    va = (char *)((uint)va_base + j);
+    *va ^= 0xFFFF;
   }
 
   switchuvm(myproc());
@@ -487,22 +479,17 @@ mencrypt(char *virtual_addr, int len) {
 }
 
 int
-mdecrypt(char *virtual_addr) { 
+mdecrypt(char *virtual_addr,  pte_t *pte) { 
   char * va;
   char * va_base;
-  pte_t *pte;
-  pte = walkpgdir(myproc()->pgdir, virtual_addr, 0);
+  
   if(*pte==0 || !pte){
      return -1;
   }
+  
   if ((*pte & PTE_E) != 0) {
-    
-    va_base = (char *) PGROUNDDOWN((uint)virtual_addr);
-    setptep(myproc()->pgdir, va_base);
-    clearptee(myproc()->pgdir,va_base);
-    //*pte = *pte & ~PTE_E; 
-    //*pte = *pte | PTE_P;
-    
+    *pte = *pte & ~PTE_E; 
+    *pte = *pte | PTE_P;
     va_base  = (char*)P2V(PTE_ADDR(*pte));
     for(int i = 0; i < PGSIZE; i++) {
       va = (char *)((uint)va_base + i);
