@@ -14,7 +14,109 @@ node_t *tail = NULL;
 void add_to_working_set() {
   if (!decrypt_check())
     return -1;
+  
 
+}
+
+// Insert a page (should be guaranteed not already in queue)
+// into the clock queue.
+static void
+clk_insert(int vpn, pte_t *pte)
+{
+    for (;;) {
+        // First advance the hand.
+        clk_hand = (clk_hand + 1) % CLOCKSIZE;
+
+        // Found an empty slot.
+        if (clk_queue[clk_hand].vpn == -1) {
+            clk_queue[clk_hand].vpn = vpn;
+            clk_queue[clk_hand].pte = pte;
+            break;
+        
+        // Else if the page in this slot does not have its ref
+        // bit set, evict this one.
+        } else if (!(*(clk_queue[clk_hand].pte) & PTE_A)) {
+            // Encrypt the evicted page.
+            mencrypt(clk_queue[clk_hand].vpn, clk_queue[clk_hand].pte);
+            // Put in the new page.
+            clk_queue[clk_hand].vpn = vpn;
+            clk_queue[clk_hand].pte = pte;
+            break;
+
+        // Else, clear the ref bit of the page in slot.
+        } else {
+            *(clk_queue[clk_hand].pte) &= (~PTE_A);
+        }
+    }
+
+    // Decrypt the new page.
+    mdecrypt(vpn, pte);
+}
+
+
+// Removing a page forcefully is tricky because you need to
+// shift things around.
+// This happens at page deallocation.
+static void
+clk_remove(int vpn)
+{
+    int prev_tail = clk_hand;
+    int match_idx = -1;
+
+    // Search for the matching element.
+    for (int i = 0; i < CLOCKSIZE; ++i) {
+        int idx = (clk_hand + i) % CLOCKSIZE;
+        if (clk_queue[idx].vpn == vpn) {
+            match_idx = idx;
+            break;
+        }
+    }
+
+    if (match_idx == -1)
+        return;
+
+    // Shift everything from match_idx+1 to prev_tail to
+    // one slot to the left.
+    for (int idx = match_idx;
+         idx != prev_tail;
+         idx = (idx + 1) % CLOCKSIZE) {
+        int next_idx = (idx + 1) % CLOCKSIZE;
+        clk_queue[idx].vpn = clk_queue[next_idx].vpn;
+        clk_queue[idx].pte = clk_queue[next_idx].pte;
+    }
+
+    // Clear the element at prev_tail. Set clk_hand to
+    // one entry to the left.
+    clk_queue[prev_tail].vpn = -1;
+    clk_hand = clk_hand == 0 ? CLOCKSIZE - 1
+                             : clk_hand - 1;
+}
+
+// Initialize the clock queue to an empty state.
+static void
+clk_clear(void)
+{
+    for (int i = 0; i < CLOCKSIZE; ++i)
+        clk_queue[i].vpn = -1;
+    clk_hand = -1;
+}
+
+// Print the clock queue in head->tail orderr, so starting
+// from hand+1.
+static void
+clk_print(void)
+{
+    int print_idx = clk_hand;
+    printf("CLK queue: | ");
+    for (int i = 0; i < CLOCKSIZE; ++i) {
+        print_idx = (print_idx + 1) % CLOCKSIZE;
+        if (clk_queue[print_idx].vpn != -1) {
+            printf("VPN %1X R %1d | ",
+                clk_queue[print_idx].vpn,
+                (*(clk_queue[print_idx].pte) & PTE_A) > 0);
+        }
+    }
+    printf("\n\n");
 }
 
 void display() {
@@ -25,69 +127,6 @@ void display() {
     }
     cprintf("------------------------------------------------------------");
 }
-
-void insert(struct proc *process) {
-    if (process == NULL) 
-        return;
-    
-    if (head == NULL) {
-        head = process;
-        tail = process;
-        head->next = NULL;
-        tail->next = NULL;
-    } else {
-        tail->next = process;
-        tail = process;
-        tail->next = NULL ;
-    }
-
-}
-
-void deletion(struct proc *process) {
-    // Store head node
-    struct proc *cur = head, *prev = head;
- 
-    // If head node itself holds the key to be deleted
-    if (cur != NULL && cur->pid == process->pid) {
-        head = cur->next; // Changed head
-        if (prev == tail)
-            tail = head;
-        cur = NULL;
-        prev = NULL;
-        return;
-    }
- 
-    // Search for the key to be deleted, keep track of the
-    // previous node as we need to change 'prev->next'
-    while (cur != NULL && cur->pid != process->pid) {
-        prev = cur;
-        cur = cur->next;
-    }
- 
-    // If key was not present in linked list
-    if (cur == NULL)
-        return;
- 
-    if (cur == tail) 
-        tail = prev;
-    
-    // Unlink the node from linked list
-    prev->next = cur->next;
-    cur = NULL;
-
-}
-
-struct proc* peek() {
-    if(head == NULL) 
-        //cprintf("Queue Underflown");
-        return NULL;
-    return head;
-}
-
-
-
-
-
 
 
 struct {

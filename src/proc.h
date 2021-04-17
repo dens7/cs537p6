@@ -56,8 +56,8 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
-  node_t clockQ[CLOCKSIZE];       // Locally allocated Clock Queue 
-  node_t *head;                  // Double-linked List Queue
+  pte_t clockQ[CLOCKSIZE];       // Used as a ring buffer
+  uint head;                  // Head of the queue
 };
 
 // Process memory is laid out contiguously, low addresses first:
