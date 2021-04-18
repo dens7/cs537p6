@@ -18,6 +18,7 @@ cp -f tests/test_14.c src/test_14.c
 
 mv src/param.h src/param_old.h
 sed -E 's/((^| )FSSIZE)(\t| )*[^ ]*/\3FSSIZE\t2000/' src/param_old.h > src/param.h
+rm -rf param_old.h
 cd src
 make -f Makefile.test clean
 make -f Makefile.test xv6.img

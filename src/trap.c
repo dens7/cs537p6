@@ -80,9 +80,9 @@ trap(struct trapframe *tf)
     break;
   case T_PGFLT:
     
-    pte_t *pte = walkpgdir(myproc()->pgdir, rcr2(), 0);
+    pte_t *pte = get_pte(myproc()->pgdir, rcr2());
     if ((*pte & PTE_E) != 0/*mdecrypt((char *)rcr2()) == 1*/) {
-      clk_insert(rcr2()/PGSIZE, walkpgdir(myproc()->pgdir, rcr2(), 0));
+      clk_insert(rcr2()/PGSIZE, get_pte(myproc()->pgdir, rcr2(), 0));
       break;
     }
     exit();

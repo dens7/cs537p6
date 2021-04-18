@@ -100,7 +100,7 @@ exec(char *path, char **argv)
   curproc->tf->eip = elf.entry;  // main
   curproc->tf->esp = sp;
   for (int i = 0; i <= curproc->sz/PGSIZE; i++) {
-    mencrypt(i, walkpgdir(pgdir, i * PGSIZE, 0));
+    mencrypt(i, get_pte(pgdir, (char *) (i * PGSIZE)));
   }
   switchuvm(curproc);
   freevm(oldpgdir);

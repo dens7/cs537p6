@@ -7,11 +7,6 @@
 #include "proc.h"
 #include "spinlock.h"
 
-
-typedef uint32_t pte_t;
-
-
-
 node_t clk_queue[CLOCKSIZE];
 int clk_hand = -1;
 
@@ -50,7 +45,6 @@ clk_insert(int vpn, pte_t *pte)
     // Decrypt the new page.
     mdecrypt(vpn, pte);
 }
-
 
 // Removing a page forcefully is tricky because you need to
 // shift things around.
@@ -105,16 +99,16 @@ void
 clk_print(void)
 {
     int print_idx = clk_hand;
-    printf("CLK queue: | ");
+    cprintf("CLK queue: | ");
     for (int i = 0; i < CLOCKSIZE; ++i) {
         print_idx = (print_idx + 1) % CLOCKSIZE;
         if (myproc()->clockQ[print_idx].vpn != -1) {
-            printf("VPN %1X R %1d | ",
+            cprintf("VPN %1X R %1d | ",
                 myproc()->clockQ[print_idx].vpn,
                 (*(myproc()->clockQ[print_idx].pte) & PTE_A) > 0);
         }
     }
-    printf("\n\n");
+    cprintf("\n\n");
 }
 
 struct {
@@ -282,7 +276,7 @@ growproc(int n)
       return -1;
     
     for(int i = curproc->sz/PGSIZE; i <= (curproc->sz + n)/PGSIZE; i++) {
-      check = mencrypt(i, walkpgdir(pgdir, i * PGSIZE, 0));
+      int check = mencrypt(i, get_pte(curproc->pgdir, (char *)(i * PGSIZE)));
     }
   
   } else if(n < 0){
@@ -325,7 +319,7 @@ fork(void)
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
-  np->head = curproc->head;
+ 
   for(i = 0; i < CLOCKSIZE; i++) {
     np->clockQ[i].vpn = curproc->clockQ[i].vpn;
     np->clockQ[i].pte = curproc->clockQ[i].pte;

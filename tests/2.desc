@@ -1,1 +1,1 @@
-[dump_rawphymem, (getpgtable)] Successfully dump physical memory of one user-allocated page
+[8] Test dump_rawphymem could return successfully with CLOCKSIZE = 8

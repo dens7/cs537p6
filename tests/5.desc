@@ -1,1 +1,1 @@
-[mencrypt, (getpgtable)] Call mencrypt with len equals to 10 and verify the page table entry status bits
+[8] Allocate one pages and verify it can be decrypted after access with CLOCKSIZE = 8

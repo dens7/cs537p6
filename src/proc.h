@@ -56,7 +56,6 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
   node_t clockQ[CLOCKSIZE];       // Used as a ring buffer
-  uint head;                  // Head of the queue
 };
 
 // Process memory is laid out contiguously, low addresses first:

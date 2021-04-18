@@ -443,6 +443,11 @@ copyout(pde_t *pgdir, uint va, void *p, uint len)
   return 0;
 }
 
+pte_t *
+get_pte(pde_t *pgdir, char *uva){
+  return walkpgdir(pgdir, uva, 0)
+}
+
 int 
 mencrypt(int vpn, pte_t *pte) {
   

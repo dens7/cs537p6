@@ -1,1 +1,1 @@
-[decrypt, mencrypt, dump_rawphymem, getpgtable] 4096 pages encrypted and decrypted. getpgtable called on top 128. This tests will take a few seconds to run.
+[128] Allocate multiple pages that will make 32 extra pages evicted with CLOCKSIZE = 128

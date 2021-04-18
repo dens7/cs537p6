@@ -105,10 +105,10 @@ int             pipewrite(struct pipe*, char*, int);
 
 //PAGEBREAK: 16
 // proc.c
-void            clk_clear(void)
-void            clk_insert(int vpn, pte_t *pte)
-void            clk_print(void)
-void            clk_remove(int vpn)
+void            clk_clear(void);
+void            clk_insert(int, pte_t*);
+void            clk_print(void);
+void            clk_remove(int vpn);
 int             cpuid(void);
 void            exit(void);
 int             fork(void);
@@ -187,6 +187,7 @@ void            freevm(pde_t*);
 void            inituvm(pde_t*, char*, uint);
 int             loaduvm(pde_t*, char*, struct inode*, uint, uint);
 pde_t*          copyuvm(pde_t*, uint);
+pte_t*          get_pte(pde_t*, char*);
 void            switchuvm(struct proc*);
 void            switchkvm(void);
 int             copyout(pde_t*, uint, void*, uint);
@@ -194,8 +195,8 @@ void            clearpteu(pde_t *pgdir, char *uva);
 void            clearptee(pde_t *pgdir, char *uva);
 void            setpteu(pde_t *pgdir, char *uva);
 void            setptee(pde_t *pgdir, char *uva);
-int             mencrypt(int vpn, pte_t *pte);
-int             mdecrypt(int vpn,  pte_t *pte)
+int             mencrypt(int vpn, pte_t*);
+int             mdecrypt(int vpn, pte_t*);
 int             dump_rawphymem(uint physical_addr, char * buffer);
 int             getpgtable(struct pt_entry* entries, int num);
 

@@ -1,1 +1,1 @@
-[mencrypt] Call mencrypt with len equals to 1 and verify the return value
+[8] Do nothing just check whether tester is runnable with CLOCKSIZE = 8
