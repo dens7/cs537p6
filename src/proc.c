@@ -10,17 +10,14 @@
 
 typedef uint32_t pte_t;
 
-typedef struct clk_node {
-    int vpn;
-    pte_t *pte;
-} node_t;
+
 
 node_t clk_queue[CLOCKSIZE];
 int clk_hand = -1;
 
 // Insert a page (should be guaranteed not already in queue)
 // into the clock queue.
-static void
+void
 clk_insert(int vpn, pte_t *pte)
 {
     
@@ -58,7 +55,7 @@ clk_insert(int vpn, pte_t *pte)
 // Removing a page forcefully is tricky because you need to
 // shift things around.
 // This happens at page deallocation.
-static void
+void
 clk_remove(int vpn)
 {
     int prev_tail = clk_hand;
@@ -94,7 +91,7 @@ clk_remove(int vpn)
 }
 
 // Initialize the clock queue to an empty state.
-static void
+void
 clk_clear(void)
 {
     for (int i = 0; i < CLOCKSIZE; ++i)
@@ -104,7 +101,7 @@ clk_clear(void)
 
 // Print the clock queue in head->tail orderr, so starting
 // from hand+1.
-static void
+void
 clk_print(void)
 {
     int print_idx = clk_hand;
@@ -188,7 +185,7 @@ allocproc(void)
 {
   struct proc *p;
   char *sp;
-
+  
   acquire(&ptable.lock);
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
@@ -210,6 +207,7 @@ found:
     return 0;
   }
   sp = p->kstack + KSTACKSIZE;
+  
 
   // Leave room for trap frame.
   sp -= sizeof *p->tf;
@@ -251,6 +249,10 @@ userinit(void)
   p->tf->eflags = FL_IF;
   p->tf->esp = PGSIZE;
   p->tf->eip = 0;  // beginning of initcode.S
+  
+  for(int i = 0; i < CLOCKSIZE; i++) {
+    p->clockQ[i].vpn = -1;
+  }
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");

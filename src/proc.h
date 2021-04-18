@@ -1,8 +1,7 @@
 // Linked List 
-typedef struct node {
-  struct node *next;
-  struct node *prev;
-  pde_t *v; // Maybe vaddr here
+typedef struct clk_node {
+    int vpn;
+    pte_t *pte;
 } node_t;
 
 // Per-CPU state
@@ -56,7 +55,7 @@ struct proc {
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
-  pte_t clockQ[CLOCKSIZE];       // Used as a ring buffer
+  node_t clockQ[CLOCKSIZE];       // Used as a ring buffer
   uint head;                  // Head of the queue
 };
 
