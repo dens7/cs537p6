@@ -52,7 +52,7 @@ walkpgdir(pde_t *pgdir, const void *va, int alloc)
     // The permissions here are overly generous, but they can
     // be further restricted by the permissions in the page table
     // entries, if necessary.
-    *pde = V2P(pgtab) | PTE_P | PTE_W | PTE_U;
+    *pde = V2P(pgtab) | PTE_P | PTE_W | PTE_U ;
   }
   return &pgtab[PTX(va)];
 }
@@ -71,7 +71,7 @@ mappages(pde_t *pgdir, void *va, uint size, uint pa, int perm)
   for(;;){
     if((pte = walkpgdir(pgdir, a, 1)) == 0)
       return -1;
-    if(*pte & PTE_P)
+    if(*pte & (PTE_P|PTE_E))
       panic("remap");
     *pte = pa | perm | PTE_P;
     if(perm & PTE_E){
@@ -444,11 +444,13 @@ copyout(pde_t *pgdir, uint va, void *p, uint len)
 }
 
 int 
-mencrypt(char *virtual_addr, pte_t *pte) {
+mencrypt(int vpn, pte_t *pte) {
   
   char * va;
   char * va_base;
-  if(uva2ka(myproc()->pgdir, (char*)virtual_addr) == 0) {
+  
+  int vpn = vpn * PGSIZE;
+  if(uva2ka(myproc()->pgdir, (char*)vpn) == 0) {
       return -1;
   }
   
@@ -479,7 +481,7 @@ mencrypt(char *virtual_addr, pte_t *pte) {
 }
 
 int
-mdecrypt(char *virtual_addr,  pte_t *pte) { 
+mdecrypt(int vpn,  pte_t *pte) { 
   char * va;
   char * va_base;
   

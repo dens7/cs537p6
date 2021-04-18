@@ -8,37 +8,45 @@
 #include "spinlock.h"
 
 
-node_t *head = NULL;
-node_t *tail = NULL;
+typedef uint32_t pte_t;
+
+typedef struct clk_node {
+    int vpn;
+    pte_t *pte;
+} node_t;
+
+node_t clk_queue[CLOCKSIZE];
+int clk_hand = -1;
 
 // Insert a page (should be guaranteed not already in queue)
 // into the clock queue.
 static void
 clk_insert(int vpn, pte_t *pte)
 {
+    
     for (;;) {
         // First advance the hand.
         clk_hand = (clk_hand + 1) % CLOCKSIZE;
 
         // Found an empty slot.
-        if (clk_queue[clk_hand].vpn == -1) {
-            clk_queue[clk_hand].vpn = vpn;
-            clk_queue[clk_hand].pte = pte;
+        if (myproc()->clockQ[clk_hand].vpn == -1) {
+            myproc()->clockQ[clk_hand].vpn = vpn;
+            myproc()->clockQ[clk_hand].pte = pte;
             break;
         
         // Else if the page in this slot does not have its ref
         // bit set, evict this one.
-        } else if (!(*(clk_queue[clk_hand].pte) & PTE_A)) {
+        } else if (!(*(myproc()->clockQ[clk_hand].pte) & PTE_A)) {
             // Encrypt the evicted page.
-            mencrypt(clk_queue[clk_hand].vpn, clk_queue[clk_hand].pte);
+            mencrypt(myproc()->clockQ[clk_hand].vpn, myproc()->clockQ[clk_hand].pte);
             // Put in the new page.
-            clk_queue[clk_hand].vpn = vpn;
-            clk_queue[clk_hand].pte = pte;
+            myproc()->clockQ[clk_hand].vpn = vpn;
+            myproc()->clockQ[clk_hand].pte = pte;
             break;
 
         // Else, clear the ref bit of the page in slot.
         } else {
-            *(clk_queue[clk_hand].pte) &= (~PTE_A);
+            *(myproc()->clockQ[clk_hand].pte) &= (~PTE_A);
         }
     }
 
@@ -59,7 +67,7 @@ clk_remove(int vpn)
     // Search for the matching element.
     for (int i = 0; i < CLOCKSIZE; ++i) {
         int idx = (clk_hand + i) % CLOCKSIZE;
-        if (clk_queue[idx].vpn == vpn) {
+        if (myproc()->clockQ[idx].vpn == vpn) {
             match_idx = idx;
             break;
         }
@@ -74,13 +82,13 @@ clk_remove(int vpn)
          idx != prev_tail;
          idx = (idx + 1) % CLOCKSIZE) {
         int next_idx = (idx + 1) % CLOCKSIZE;
-        clk_queue[idx].vpn = clk_queue[next_idx].vpn;
-        clk_queue[idx].pte = clk_queue[next_idx].pte;
+        myproc()->clockQ[idx].vpn = myproc()->clockQ[next_idx].vpn;
+        myproc()->clockQ[idx].pte = myproc()->clockQ[next_idx].pte;
     }
 
     // Clear the element at prev_tail. Set clk_hand to
     // one entry to the left.
-    clk_queue[prev_tail].vpn = -1;
+    myproc()->clockQ[prev_tail].vpn = -1;
     clk_hand = clk_hand == 0 ? CLOCKSIZE - 1
                              : clk_hand - 1;
 }
@@ -90,7 +98,7 @@ static void
 clk_clear(void)
 {
     for (int i = 0; i < CLOCKSIZE; ++i)
-        clk_queue[i].vpn = -1;
+        myproc()->clockQ[i].vpn = -1;
     clk_hand = -1;
 }
 
@@ -103,24 +111,14 @@ clk_print(void)
     printf("CLK queue: | ");
     for (int i = 0; i < CLOCKSIZE; ++i) {
         print_idx = (print_idx + 1) % CLOCKSIZE;
-        if (clk_queue[print_idx].vpn != -1) {
+        if (myproc()->clockQ[print_idx].vpn != -1) {
             printf("VPN %1X R %1d | ",
-                clk_queue[print_idx].vpn,
-                (*(clk_queue[print_idx].pte) & PTE_A) > 0);
+                myproc()->clockQ[print_idx].vpn,
+                (*(myproc()->clockQ[print_idx].pte) & PTE_A) > 0);
         }
     }
     printf("\n\n");
 }
-
-void display() {
-    struct proc *cur = head;
-    while(cur != NULL) {
-      cprintf(" pid: %d -> ", cur->pid);
-      cur = cur->next;
-    }
-    cprintf("------------------------------------------------------------");
-}
-
 
 struct {
   struct spinlock lock;
@@ -280,12 +278,21 @@ growproc(int n)
   if(n > 0){
     if((sz = allocuvm(curproc->pgdir, sz, sz + n)) == 0)
       return -1;
+    
+    for(int i = curproc->sz/PGSIZE; i <= (curproc->sz + n)/PGSIZE; i++) {
+      check = mencrypt(i, walkpgdir(pgdir, i * PGSIZE, 0));
+    }
+  
   } else if(n < 0){
     if((sz = deallocuvm(curproc->pgdir, sz, sz + n)) == 0)
       return -1;
+    
+    for(int i = curproc->sz/PGSIZE; i >= (curproc->sz + n)/PGSIZE; i--) {
+      clk_remove(i);
+    }
+      
   }
   curproc->sz = sz;
-  mencrypt();
   switchuvm(curproc);
   return 0;
 }
@@ -312,10 +319,15 @@ fork(void)
     np->state = UNUSED;
     return -1;
   }
+  
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
-
+  np->head = curproc->head;
+  for(i = 0; i < CLOCKSIZE; i++) {
+    np->clockQ[i].vpn = curproc->clockQ[i].vpn;
+    np->clockQ[i].pte = curproc->clockQ[i].pte;
+  }
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
 

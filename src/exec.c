@@ -92,7 +92,6 @@ exec(char *path, char **argv)
     if(*s == '/')
       last = s+1;
   safestrcpy(curproc->name, last, sizeof(curproc->name));
-  mencrypt();
 
   // Commit to the user image.
   oldpgdir = curproc->pgdir;
@@ -100,6 +99,9 @@ exec(char *path, char **argv)
   curproc->sz = sz;
   curproc->tf->eip = elf.entry;  // main
   curproc->tf->esp = sp;
+  for (int i = 0; i <= curproc->sz/PGSIZE; i++) {
+    mencrypt(i, walkpgdir(pgdir, i * PGSIZE, 0));
+  }
   switchuvm(curproc);
   freevm(oldpgdir);
   
