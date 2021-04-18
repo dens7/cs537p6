@@ -198,7 +198,7 @@ void            setptee(pde_t *pgdir, char *uva);
 int             mencrypt(int vpn, pte_t*);
 int             mdecrypt(int vpn, pte_t*);
 int             dump_rawphymem(uint physical_addr, char * buffer);
-int             getpgtable(struct pt_entry* entries, int num);
+int             getpgtable(struct pt_entry* entries, int num, int wsetOnly);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))

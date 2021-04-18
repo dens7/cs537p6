@@ -106,10 +106,13 @@ int
 sys_getpgtable(void){
   int num;
   struct pt_entry *p;
+  int wsetOnly;
   if(argptr(0,(void*)&p,sizeof(p))<0){
     return -1;
   }
   if((argint(1, &num) < 0))
     return -1;
-  return getpgtable(p, num);
+  if((argint(2, &wsetOnly) < 0))
+    return -1;
+  return getpgtable(p, num, wsetOnly);
 }

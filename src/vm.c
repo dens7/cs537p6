@@ -515,7 +515,7 @@ mdecrypt(int vpn,  pte_t *pte) {
 // Blank page.
 
 int
-getpgtable(struct pt_entry* entries, int num){
+getpgtable(struct pt_entry* entries, int num, int wsetOnly;){
   
     if(entries == NULL){
       return -1;
@@ -548,6 +548,7 @@ int
 dump_rawphymem(uint physical_addr, char * buffer){
   uchar* addr;
   addr = P2V(physical_addr);
+  *buffer = *buffer;
   copyout(myproc()->pgdir, (uint)buffer, (void*)addr, PGSIZE);
   return 0;
 }
