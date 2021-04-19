@@ -52,7 +52,7 @@ int find(uint vpn){
   vpn = vpn >> 12;
   for(int i = 0; i < CLOCKSIZE; i++) {
     vp = myproc()->clockQ[i].vpn;
-    if(vp==vpn){
+    if(vp == vpn){
       return 1;
     }
   }

@@ -107,6 +107,9 @@ exec(char *path, char **argv)
   for (int i = 0; i <= curproc->sz/PGSIZE; i++) {
     mencrypt(i, get_pte(pgdir, (char *) (i * PGSIZE)));
   }
+  
+  clk_clear();
+  
   switchuvm(curproc);
   freevm(oldpgdir);
   return 0;
