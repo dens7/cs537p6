@@ -99,6 +99,11 @@ exec(char *path, char **argv)
   curproc->sz = sz;
   curproc->tf->eip = elf.entry;  // main
   curproc->tf->esp = sp;
+  // for(int i = 0; i < CLOCKSIZE; i++) {
+  //   curproc->clockQ[i].vpn=0;
+  //   //curproc->clockQ[i].pte=0;
+    
+  // }
   for (int i = 0; i <= curproc->sz/PGSIZE; i++) {
     mencrypt(i, get_pte(pgdir, (char *) (i * PGSIZE)));
   }

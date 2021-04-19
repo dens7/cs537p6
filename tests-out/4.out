@@ -1,0 +1,4 @@
+XV6_TEST_OUTPUT Index 0: pdx: 0x0, ptx: 0x46, writable bit: 1, encrypted: 1, ref: 0
+XV6_TEST_OUTPUT Index 1: pdx: 0x0, ptx: 0x45, writable bit: 1, encrypted: 1, ref: 0
+XV6_TEST_OUTPUT Index 2: pdx: 0x0, ptx: 0x44, writable bit: 1, encrypted: 1, ref: 0
+XV6_TEST_OUTPUT: content is incorrect at address 0x4402C: expected 0xFF, got 0xDF

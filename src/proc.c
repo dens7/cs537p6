@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "stdio.h"
 
 node_t clk_queue[CLOCKSIZE];
 int clk_hand = -1;
@@ -15,7 +16,7 @@ int clk_hand = -1;
 void
 clk_insert(int vpn, pte_t *pte)
 {
-    
+    cprintf("Inserting %x\n",vpn);
     for (;;) {
         // First advance the hand.
         clk_hand = (clk_hand + 1) % CLOCKSIZE;
@@ -44,6 +45,18 @@ clk_insert(int vpn, pte_t *pte)
 
     // Decrypt the new page.
     mdecrypt(vpn, pte);
+}
+
+int find(uint vpn){
+  uint vp;
+  vpn = vpn >> 12;
+  for(int i = 0; i < CLOCKSIZE; i++) {
+    vp = myproc()->clockQ[i].vpn;
+    if(vp==vpn){
+      return 1;
+    }
+  }
+  return -1;
 }
 
 // Removing a page forcefully is tricky because you need to
@@ -276,7 +289,7 @@ growproc(int n)
       return -1;
     
     for(int i = curproc->sz/PGSIZE; i <= (curproc->sz + n)/PGSIZE; i++) {
-      int check = mencrypt(i, get_pte(curproc->pgdir, (char *)(i * PGSIZE)));
+      mencrypt(i, get_pte(curproc->pgdir, (char *)(i * PGSIZE)));
     }
   
   } else if(n < 0){

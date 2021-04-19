@@ -109,6 +109,7 @@ void            clk_clear(void);
 void            clk_insert(int, pte_t*);
 void            clk_print(void);
 void            clk_remove(int vpn);
+int             find(uint vpn);
 int             cpuid(void);
 void            exit(void);
 int             fork(void);

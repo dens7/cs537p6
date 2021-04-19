@@ -445,17 +445,17 @@ copyout(pde_t *pgdir, uint va, void *p, uint len)
 
 pte_t *
 get_pte(pde_t *pgdir, char *uva){
-  return walkpgdir(pgdir, uva, 0)
+  return walkpgdir(pgdir, uva, 0);
 }
 
 int 
 mencrypt(int vpn, pte_t *pte) {
-  
+  cprintf("Encrypting %x\n",vpn);
   char * va;
   char * va_base;
   
-  int vpn = vpn * PGSIZE;
-  if(uva2ka(myproc()->pgdir, (char*)vpn) == 0) {
+  int vp = vpn * PGSIZE;
+  if(uva2ka(myproc()->pgdir, (char*)vp) == 0) {
       return -1;
   }
   
@@ -487,6 +487,7 @@ mencrypt(int vpn, pte_t *pte) {
 
 int
 mdecrypt(int vpn,  pte_t *pte) { 
+  cprintf("Decrypting %x\n",vpn);
   char * va;
   char * va_base;
   
@@ -515,15 +516,19 @@ mdecrypt(int vpn,  pte_t *pte) {
 // Blank page.
 
 int
-getpgtable(struct pt_entry* entries, int num, int wsetOnly;){
+getpgtable(struct pt_entry* entries, int num, int wsetOnly){
   
     if(entries == NULL){
       return -1;
     }
- 
+    if(wsetOnly!=0 && wsetOnly!=1){
+      return -1;
+    }
     int ret = 0;  
     for(void* i = (void*)PGROUNDDOWN(myproc()->sz);i >=0; i-=PGSIZE){
-      
+      if(i==0){
+        break;
+      }
       if(ret>=num){
         break;
       }
@@ -531,16 +536,42 @@ getpgtable(struct pt_entry* entries, int num, int wsetOnly;){
       pte = walkpgdir(myproc()->pgdir, i, 0);
       if(*pte){
         //assign the values
+        // if(wsetOnly==1 && PTE_E && PTE_U){
+        // cprintf("\t Inside first statement\n");
+        // continue;
+        // }
+        if(wsetOnly==0){
+        //cprintf("\t Inside wsetONly==0\n");
         entries[ret].ptx = PTX(i);
         entries[ret].pdx = PDX(i);
         entries[ret].ppage=PTE_ADDR(*pte) >> PTXSHIFT;
-        //entries[ret].present=(*pte & PTE_P);
         entries[ret].present = (*pte & PTE_P) ? 1 : 0;
         entries[ret].writable = (*pte & PTE_W) ? 1 : 0;
         entries[ret].encrypted = (*pte & PTE_E) ? 1 : 0;
+        entries[ret].user = (*pte & PTE_U)? 1 : 0;
+        entries[ret].ref =  (*pte & PTE_A)? 1 : 0;
         ret++;
+        }
+        if(wsetOnly==1 && (find((uint)i)==1)){
+         //cprintf("\t Inside wsetONly==1 ,  I= %x\n",i);
+        entries[ret].ptx = PTX(i);
+        entries[ret].pdx = PDX(i);
+        entries[ret].ppage=PTE_ADDR(*pte) >> PTXSHIFT;
+        entries[ret].present = (*pte & PTE_P) ? 1 : 0;
+        entries[ret].writable = (*pte & PTE_W) ? 1 : 0;
+        entries[ret].encrypted = (*pte & PTE_E) ? 1 : 0;
+        entries[ret].user = (*pte & PTE_U)? 1 : 0;
+        entries[ret].ref =  (*pte & PTE_A)? 1 : 0;
+        ret++;
+       }
+       else{
+         //cprintf("\t Inside else\n");
+         continue;
+       }
+      
+       }
       }
-    }
+    
     return ret;
 }
 
