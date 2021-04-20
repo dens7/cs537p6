@@ -518,29 +518,17 @@ mdecrypt(int vpn,  pte_t *pte) {
 int
 getpgtable(struct pt_entry* entries, int num, int wsetOnly){
   
-    if(entries == NULL){
-      return -1;
-    }
-    if(wsetOnly!=0 && wsetOnly!=1){
-      return -1;
-    }
-    int ret = 0;  
-    for(void* i = (void*)PGROUNDDOWN(myproc()->sz);i >=0; i-=PGSIZE){
-      if(i==0){
-        break;
-      }
-      if(ret>=num){
-        break;
-      }
-      pte_t *pte;
-      pte = walkpgdir(myproc()->pgdir, i, 0);
-      if(*pte){
-        //assign the values
-        // if(wsetOnly==1 && PTE_E && PTE_U){
-        // cprintf("\t Inside first statement\n");
-        // continue;
-        // }
-        if(wsetOnly==0){
+  if(entries == NULL || (wsetOnly!=0 && wsetOnly!=1) ){
+    return -1;
+  }
+ 
+  int ret = 0;  
+  for(void* i = (void*)PGROUNDDOWN(myproc()->sz);i >=0; i-=PGSIZE){
+    pte_t *pte;
+    pte = walkpgdir(myproc()->pgdir, i, 0);
+    if(*pte){
+      
+      if(wsetOnly==0){
         //cprintf("\t Inside wsetONly==0\n");
         entries[ret].ptx = PTX(i);
         entries[ret].pdx = PDX(i);
@@ -551,9 +539,9 @@ getpgtable(struct pt_entry* entries, int num, int wsetOnly){
         entries[ret].user = (*pte & PTE_U)? 1 : 0;
         entries[ret].ref =  (*pte & PTE_A)? 1 : 0;
         ret++;
-        }
-        if(wsetOnly==1 && (find((uint)i)==1)){
-         //cprintf("\t Inside wsetONly==1 ,  I= %x\n",i);
+      }
+      if(wsetOnly==1 && (find((uint)i)==1)){
+        //cprintf("\t Inside wsetONly==1 ,  I= %x\n",i);
         entries[ret].ptx = PTX(i);
         entries[ret].pdx = PDX(i);
         entries[ret].ppage=PTE_ADDR(*pte) >> PTXSHIFT;
@@ -563,16 +551,13 @@ getpgtable(struct pt_entry* entries, int num, int wsetOnly){
         entries[ret].user = (*pte & PTE_U)? 1 : 0;
         entries[ret].ref =  (*pte & PTE_A)? 1 : 0;
         ret++;
-       }
-       else{
-         //cprintf("\t Inside else\n");
-         continue;
-       }
-      
-       }
       }
-    
-    return ret;
+    }
+    if(i==0 || ret>=num){
+      break;
+    }
+  }
+  return ret;
 }
 
 int
